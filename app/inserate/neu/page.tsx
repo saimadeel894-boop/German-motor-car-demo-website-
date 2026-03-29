@@ -1,5 +1,5 @@
 "use client";
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, ChangeEvent, DragEvent } from "react";
 
 const STEPS = ["Fahrzeug", "Details", "Zustand", "Fotos", "Veröffentlichen"];
 
@@ -9,7 +9,7 @@ const BRANDS = [
   "Kia", "Nissan", "Mazda", "Volvo", "Porsche", "Ferrari", "Andere"
 ];
 
-const MODELS = {
+const MODELS: Record<string, string[]> = {
   "Audi": ["A1", "A3", "A4", "A6", "A8", "Q3", "Q5", "Q7", "TT", "R8"],
   "BMW": ["1er", "2er", "3er", "4er", "5er", "7er", "X1", "X3", "X5", "M3"],
   "Mercedes-Benz": ["A-Klasse", "C-Klasse", "E-Klasse", "S-Klasse", "GLA", "GLC", "GLE"],
@@ -28,7 +28,40 @@ const BODY_TYPES = ["Limousine", "Kombi", "SUV", "Coupe", "Cabrio", "Van", "Pick
 const COLORS = ["Schwarz", "Weiß", "Silber", "Grau", "Blau", "Rot", "Grün", "Braun", "Beige", "Orange", "Gelb", "Sonstige"];
 const DURATIONS = ["7 Tage", "14 Tage", "30 Tage"];
 
-const initialForm = {
+interface ImageItem {
+  url: string;
+  name: string;
+  size: number;
+}
+
+interface FormState {
+  brand: string;
+  model: string;
+  year: string;
+  bodyType: string;
+  price: string;
+  mileage: string;
+  fuel: string;
+  gearbox: string;
+  power: string;
+  color: string;
+  condition: string;
+  description: string;
+  seats: string;
+  doors: string;
+  firstRegistration: string;
+  vin: string;
+  images: ImageItem[];
+  duration: string;
+  name: string;
+  phone: string;
+  location: string;
+  agreeTerms: boolean;
+}
+
+type Updater<T> = T | ((prev: T) => T);
+
+const initialForm: FormState = {
   brand: "", model: "", year: "", bodyType: "",
   price: "", mileage: "", fuel: "", gearbox: "", power: "", color: "",
   condition: "", description: "", seats: "", doors: "",
@@ -37,7 +70,7 @@ const initialForm = {
   duration: "30 Tage", name: "", phone: "", location: "", agreeTerms: false,
 };
 
-const StepIndicator = ({ current, total, labels }) => (
+const StepIndicator = ({ current, total, labels }: { current: number; total: number; labels: string[] }) => (
   <div style={{ padding: "0 20px 20px" }}>
     <div style={{ display: "flex", alignItems: "center", gap: 0 }}>
       {labels.map((label, i) => (
@@ -73,7 +106,7 @@ const StepIndicator = ({ current, total, labels }) => (
   </div>
 );
 
-const Field = ({ label, required, children, hint }) => (
+const Field = ({ label, required, children, hint }: { label: string; required?: boolean; children: React.ReactNode; hint?: string }) => (
   <div style={{ marginBottom: 18 }}>
     <label style={{
       display: "block", fontSize: 11, fontWeight: 700, letterSpacing: "0.06em",
@@ -87,16 +120,16 @@ const Field = ({ label, required, children, hint }) => (
   </div>
 );
 
-const inputStyle = {
+const inputStyle: React.CSSProperties = {
   width: "100%", padding: "13px 14px", borderRadius: 10, border: "1.5px solid #DDE3EA",
   fontSize: 15, color: "#1C3557", background: "#FAFBFD", outline: "none",
   fontFamily: "'DM Sans', sans-serif", boxSizing: "border-box",
   transition: "border-color 0.2s, box-shadow 0.2s",
 };
 
-const selectStyle = { ...inputStyle, appearance: "none", backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%238A9BAE' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")`, backgroundRepeat: "no-repeat", backgroundPosition: "right 12px center", paddingRight: 40 };
+const selectStyle: React.CSSProperties = { ...inputStyle, appearance: "none", backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%238A9BAE' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")`, backgroundRepeat: "no-repeat", backgroundPosition: "right 12px center", paddingRight: 40 };
 
-const Input = ({ value, onChange, placeholder, type = "text", ...rest }) => {
+const Input = ({ value, onChange, placeholder, type = "text", ...rest }: React.InputHTMLAttributes<HTMLInputElement>) => {
   const [focused, setFocused] = useState(false);
   return (
     <input
@@ -108,7 +141,7 @@ const Input = ({ value, onChange, placeholder, type = "text", ...rest }) => {
   );
 };
 
-const Select = ({ value, onChange, children, ...rest }) => {
+const Select = ({ value, onChange, children, ...rest }: React.SelectHTMLAttributes<HTMLSelectElement>) => {
   const [focused, setFocused] = useState(false);
   return (
     <select value={value} onChange={onChange}
@@ -121,12 +154,12 @@ const Select = ({ value, onChange, children, ...rest }) => {
   );
 };
 
-const Row = ({ children }) => (
+const Row = ({ children }: { children: React.ReactNode }) => (
   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>{children}</div>
 );
 
 // ── STEP 1: Vehicle identity ──────────────────────────────────────────────────
-const StepFahrzeug = ({ form, update }) => (
+const StepFahrzeug = ({ form, update }: { form: FormState; update: <K extends keyof FormState>(field: K, value: Updater<FormState[K]>) => void }) => (
   <div>
     <SectionTitle icon="🚗" title="Fahrzeugdaten" subtitle="Marke, Modell und Karosserie" />
     <Field label="Marke" required>
@@ -162,7 +195,7 @@ const StepFahrzeug = ({ form, update }) => (
 );
 
 // ── STEP 2: Technical details ─────────────────────────────────────────────────
-const StepDetails = ({ form, update }) => (
+const StepDetails = ({ form, update }: { form: FormState; update: <K extends keyof FormState>(field: K, value: Updater<FormState[K]>) => void }) => (
   <div>
     <SectionTitle icon="⚙️" title="Technische Details" subtitle="Motor, Getriebe und Ausstattung" />
     <Field label="Kilometerstand" required>
@@ -214,7 +247,7 @@ const StepDetails = ({ form, update }) => (
 );
 
 // ── STEP 3: Condition & description ──────────────────────────────────────────
-const StepZustand = ({ form, update }) => (
+const StepZustand = ({ form, update }: { form: FormState; update: <K extends keyof FormState>(field: K, value: Updater<FormState[K]>) => void }) => (
   <div>
     <SectionTitle icon="📋" title="Zustand & Beschreibung" subtitle="Zustand und weitere Informationen" />
     <Field label="Fahrzeugzustand" required>
@@ -250,23 +283,24 @@ const StepZustand = ({ form, update }) => (
 );
 
 // ── STEP 4: Photo upload ──────────────────────────────────────────────────────
-const StepFotos = ({ form, update }) => {
-  const fileRef = useRef();
+const StepFotos = ({ form, update }: { form: FormState; update: <K extends keyof FormState>(field: K, value: Updater<FormState[K]>) => void }) => {
+  const fileRef = useRef<HTMLInputElement>(null);
 
-  const handleFiles = useCallback((files) => {
+  const handleFiles = useCallback((files: FileList | null) => {
+    if (!files) return;
     const valid = Array.from(files).filter(f => f.type.startsWith("image/"));
     valid.forEach(file => {
       const reader = new FileReader();
       reader.onload = (e) => {
-        update("images", prev => [...prev, { url: e.target.result, name: file.name, size: file.size }]);
+        update("images", (prev: ImageItem[]) => [...prev, { url: e.target?.result as string, name: file.name, size: file.size }]);
       };
       reader.readAsDataURL(file);
     });
   }, [update]);
 
-  const removeImage = (idx) => update("images", prev => prev.filter((_, i) => i !== idx));
+  const removeImage = (idx: number) => update("images", (prev: ImageItem[]) => prev.filter((_, i) => i !== idx));
 
-  const onDrop = useCallback((e) => {
+  const onDrop = useCallback((e: DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     handleFiles(e.dataTransfer.files);
   }, [handleFiles]);
@@ -340,7 +374,7 @@ const StepFotos = ({ form, update }) => {
 };
 
 // ── STEP 5: Publish ───────────────────────────────────────────────────────────
-const StepVeroeffentlichen = ({ form, update }) => (
+const StepVeroeffentlichen = ({ form, update }: { form: FormState; update: <K extends keyof FormState>(field: K, value: Updater<FormState[K]>) => void }) => (
   <div>
     <SectionTitle icon="🚀" title="Veröffentlichen" subtitle="Fast geschafft — letzte Details" />
     <Field label="Laufzeit des Inserats" required>
@@ -400,7 +434,7 @@ const StepVeroeffentlichen = ({ form, update }) => (
 );
 
 // ── Section title helper ──────────────────────────────────────────────────────
-const SectionTitle = ({ icon, title, subtitle }) => (
+const SectionTitle = ({ icon, title, subtitle }: { icon: string; title: string; subtitle: string }) => (
   <div style={{ marginBottom: 24 }}>
     <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
       <span style={{ fontSize: 22 }}>{icon}</span>
@@ -440,14 +474,14 @@ const SuccessScreen = () => (
 // ── Main component ────────────────────────────────────────────────────────────
 export default function CarPostingForm() {
   const [step, setStep] = useState(0);
-  const [form, setForm] = useState(initialForm);
+  const [form, setForm] = useState<FormState>(initialForm);
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  const update = (field, value) => {
+  const update = <K extends keyof FormState>(field: K, value: Updater<FormState[K]>) => {
     setForm(prev => ({
       ...prev,
-      [field]: typeof value === "function" ? value(prev[field]) : value,
+      [field]: typeof value === "function" ? (value as (prev: FormState[K]) => FormState[K])(prev[field]) : value,
     }));
   };
 
@@ -468,11 +502,11 @@ export default function CarPostingForm() {
   };
 
   const steps = [
-    <StepFahrzeug form={form} update={update} />,
-    <StepDetails form={form} update={update} />,
-    <StepZustand form={form} update={update} />,
-    <StepFotos form={form} update={update} />,
-    <StepVeroeffentlichen form={form} update={update} />,
+    <StepFahrzeug key="fahrzeug" form={form} update={update} />,
+    <StepDetails key="details" form={form} update={update} />,
+    <StepZustand key="zustand" form={form} update={update} />,
+    <StepFotos key="fotos" form={form} update={update} />,
+    <StepVeroeffentlichen key="veroeff" form={form} update={update} />,
   ];
 
   return (

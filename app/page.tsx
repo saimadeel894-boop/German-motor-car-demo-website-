@@ -29,7 +29,7 @@ export default function HomePage() {
   const [price, setPrice] = useState("Beliebig");
   const [menuOpen, setMenuOpen] = useState(false);
 
-  const fmt = (n) => n.toLocaleString("de-DE");
+  const fmt = (n: number) => n.toLocaleString("de-DE");
 
   return (
     <>
