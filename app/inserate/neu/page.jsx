@@ -39,6 +39,35 @@ function cleanFilename(name) {
     .toLowerCase();
 }
 
+// ── Resize image before processing to avoid timeouts and memory limits ─────────
+async function resizeImageFile(file, maxWidth = 1600) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const objectUrl = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(objectUrl);
+      let w = img.width;
+      let h = img.height;
+      if (w > maxWidth || h > maxWidth) {
+        const ratio = Math.min(maxWidth / w, maxWidth / h);
+        w = Math.round(w * ratio);
+        h = Math.round(h * ratio);
+      }
+      const canvas = document.createElement("canvas");
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(img, 0, 0, w, h);
+      resolve(canvas.toDataURL("image/jpeg", 0.85));
+    };
+    img.onerror = (err) => {
+      URL.revokeObjectURL(objectUrl);
+      reject(err);
+    };
+    img.src = objectUrl;
+  });
+}
+
 // ── Apply blur using coordinates from API ────────────────────────────────────
 async function applyBlurToImage(dataUrl, results) {
   return new Promise((resolve) => {
@@ -294,13 +323,15 @@ const StepFotos = ({ form, update }) => {
     setPlateResult(null);
 
     for (const file of valid) {
-      // Read file
-      setStatusMsg("📤 Foto wird geladen…");
-      const dataUrl = await new Promise(res => {
-        const reader = new FileReader();
-        reader.onload = e => res(e.target.result);
-        reader.readAsDataURL(file);
-      });
+      // Read and resize file
+      setStatusMsg("📤 Foto wird vorbereitet…");
+      let dataUrl;
+      try {
+        dataUrl = await resizeImageFile(file, 1600);
+      } catch (err) {
+        console.error("Resize failed", err);
+        continue;
+      }
 
       // Call server-side API route for plate detection
       setStatusMsg("🔍 Kennzeichen wird erkannt…");

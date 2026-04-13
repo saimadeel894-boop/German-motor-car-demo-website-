@@ -210,11 +210,17 @@ export default function HomePage() {
                   {/* Image with proper crop */}
                   <div style={{ width:140, flexShrink:0, position:"relative", overflow:"hidden", background:"#EBF2FF" }}>
                     {car.image_url ? (
-                      <img src={car.image_url} alt={car.title}
-                        style={{ position:"absolute", top:0, left:0, width:"100%", height:"100%", objectFit:"cover", objectPosition:"center" }} />
-                    ) : (
-                      <div style={{ position:"absolute", inset:0, display:"flex", alignItems:"center", justifyContent:"center", fontSize:28 }}>🚗</div>
-                    )}
+                      <img
+                        src={car.image_url}
+                        alt=""
+                        style={{ position:"absolute", top:0, left:0, width:"100%", height:"100%", objectFit:"cover", objectPosition:"center" }}
+                        onError={e => {
+                          e.currentTarget.style.display = "none";
+                          e.currentTarget.nextSibling.style.display = "flex";
+                        }}
+                      />
+                    ) : null}
+                    <div style={{ position:"absolute", inset:0, display: car.image_url ? "none" : "flex", alignItems:"center", justifyContent:"center", fontSize:28 }}>🚗</div>
                     {car.id === newId && (
                       <div style={{ position:"absolute", top:8, left:8, background:"#0052CC", color:"#fff", fontSize:9, fontWeight:800, padding:"2px 8px", borderRadius:20 }}>NEU ✨</div>
                     )}
