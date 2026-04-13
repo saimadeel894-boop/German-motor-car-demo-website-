@@ -148,9 +148,10 @@ async function detectPlateViaAPI(dataUrl) {
 // ── Upload image to Supabase Storage ────────────────────────────────────────
 async function uploadImage(dataUrl, originalName) {
   try {
-    const blob = await (await fetch(dataUrl)).blob();
+    const res = await fetch(dataUrl);
+    const blob = await res.blob();
     const clean = cleanFilename(originalName.replace(/\.[^.]+$/, ""));
-    const path = `cars/${Date.now()}_${clean}.jpg`;
+    const path = `${Date.now()}_${clean}.jpg`;
 
     const { error } = await supabase.storage
       .from("car-images")
@@ -161,6 +162,11 @@ async function uploadImage(dataUrl, originalName) {
 
     if (error) {
       console.error("Storage error:", error.message);
+      if (error.message.includes("bucket")) {
+        alert("Fehler: Supabase Bucket 'car-images' wurde nicht gefunden. Bitte legen Sie diesen im Supabase Dashboard an (öffentlich).");
+      } else {
+        alert("Upload Fehler: " + error.message);
+      }
       return null;
     }
 
@@ -168,6 +174,7 @@ async function uploadImage(dataUrl, originalName) {
     return data.publicUrl;
   } catch (err) {
     console.error("Upload error:", err);
+    alert("Kritischer Upload Fehler. Bitte prüfen Sie die Konsole.");
     return null;
   }
 }
@@ -565,6 +572,13 @@ export default function CarPostingForm() {
       let imageUrl = null;
       if (form.images.length > 0) {
         imageUrl = await uploadImage(form.images[0].url, form.images[0].name);
+        if (!imageUrl) {
+           const confirmInsert = confirm("Das Foto konnte nicht hochgeladen werden. Möchten Sie das Inserat trotzdem ohne Foto speichern?");
+           if (!confirmInsert) {
+             setSubmitting(false);
+             return;
+           }
+        }
       }
 
       // Insert into Supabase listings table
