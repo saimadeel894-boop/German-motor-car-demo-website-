@@ -61,9 +61,15 @@ export default function HomePage() {
         .from("listings")
         .select("*")
         .order("created_at", { ascending: false });
-      if (!error && data) setListings(data);
+      if (error) {
+        console.error("Supabase error:", error.message);
+        setListings([]);
+      } else {
+        setListings(data || []);
+      }
     } catch (err) {
-      console.error("Fetch error:", err);
+      console.error("Network error:", err);
+      setListings([]);
     }
     setLoading(false);
   };

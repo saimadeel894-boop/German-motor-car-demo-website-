@@ -21,11 +21,15 @@ async function applyPlateBlur(dataUrl) {
 
   let results = [];
   try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5000);
     const res = await fetch("https://api.platerecognizer.com/v1/plate-reader/", {
       method: "POST",
       headers: { Authorization: `Token ${PLATE_API_TOKEN}` },
       body: fd,
+      signal: controller.signal
     });
+    clearTimeout(timeout);
     const json = await res.json();
     results = json.results || [];
   } catch {}
@@ -197,7 +201,6 @@ const StepFotos = ({ form, update }) => {
       setMsg("📤 Foto wird verarbeitet…");
       const dataUrl = await new Promise(res => { const r = new FileReader(); r.onload = e => res(e.target.result); r.readAsDataURL(file); });
       setMsg("🔍 Kennzeichen wird erkannt…");
-      await new Promise(r => setTimeout(r, 400));
 
       const blob = await (await fetch(dataUrl)).blob();
       const fd = new FormData();
@@ -207,7 +210,10 @@ const StepFotos = ({ form, update }) => {
       let results = [];
       try {
         setMsg("🛡️ Kennzeichen wird geschwärzt…");
-        const res = await fetch("https://api.platerecognizer.com/v1/plate-reader/", { method:"POST", headers:{ Authorization:`Token ${PLATE_API_TOKEN}` }, body:fd });
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 5000);
+        const res = await fetch("https://api.platerecognizer.com/v1/plate-reader/", { method:"POST", headers:{ Authorization:`Token ${PLATE_API_TOKEN}` }, body:fd, signal: controller.signal });
+        clearTimeout(timeout);
         const json = await res.json();
         results = json.results || [];
         setPlateFound(results.length > 0);
