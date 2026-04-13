@@ -14,6 +14,11 @@ const MODELS = {
   "Opel":["Corsa","Astra","Mokka"],
   "Toyota":["Yaris","Corolla","RAV4"],
   "Renault":["Clio","Megane","Captur"],
+  "Skoda":["Octavia","Fabia","Superb","Karoq","Kodiaq","Scala"],
+  "Seat":["Ibiza","Leon","Arona","Ateca","Tarraco"],
+  "Hyundai":["i10","i20","i30","Tucson","Kona","Santa Fe"],
+  "Kia":["Picanto","Rio","Ceed","Sportage","Sorento","Stonic"],
+  "Nissan":["Micra","Juke","Qashqai","X-Trail","Leaf"],
   "Andere":["Sonstiges"]
 };
 const FUEL_TYPES = ["Benzin","Diesel","Elektro","Hybrid","Plug-in-Hybrid","LPG"];
@@ -212,16 +217,16 @@ const StepFahrzeug = ({ form, update, errors }) => (
     <SectionHead icon="🚗" title="Fahrzeugdaten" sub="Grundlegende Fahrzeuginformationen" />
 
     <Field label="Marke" required error={errors.brand}>
-      <FSelect value={form.brand} onChange={e => update("brand", e.target.value)}>
+      <FSelect value={form.brand} onChange={e => { update("brand", e.target.value); update("model", ""); }}>
         <option value="">Marke wählen</option>
-        {BRANDS.map(b => <option key={b}>{b}</option>)}
+        {BRANDS.map(b => <option key={b} value={b}>{b}</option>)}
       </FSelect>
     </Field>
 
     <Field label="Modell" required error={errors.model}>
       <FSelect value={form.model} onChange={e => update("model", e.target.value)} disabled={!form.brand}>
         <option value="">Modell wählen</option>
-        {(MODELS[form.brand] || []).map(m => <option key={m}>{m}</option>)}
+        {(MODELS[form.brand] || []).map(m => <option key={m} value={m}>{m}</option>)}
       </FSelect>
     </Field>
 
@@ -229,13 +234,13 @@ const StepFahrzeug = ({ form, update, errors }) => (
       <Field label="Baujahr" required error={errors.year}>
         <FSelect value={form.year} onChange={e => update("year", e.target.value)}>
           <option value="">Jahr</option>
-          {Array.from({ length: 30 }, (_, i) => 2024 - i).map(y => <option key={y}>{y}</option>)}
+          {Array.from({ length: 30 }, (_, i) => 2024 - i).map(y => <option key={y} value={y}>{y}</option>)}
         </FSelect>
       </Field>
       <Field label="Kraftstoff" required error={errors.fuel}>
         <FSelect value={form.fuel} onChange={e => update("fuel", e.target.value)}>
           <option value="">Kraftstoff</option>
-          {FUEL_TYPES.map(f => <option key={f}>{f}</option>)}
+          {FUEL_TYPES.map(f => <option key={f} value={f}>{f}</option>)}
         </FSelect>
       </Field>
     </Row>
