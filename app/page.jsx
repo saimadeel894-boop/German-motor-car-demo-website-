@@ -1,18 +1,19 @@
 "use client";
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabaseClient";
+import Link from "next/link";
 
 const BRANDS = ["Alle Marken","Audi","BMW","Mercedes-Benz","Volkswagen","Ford","Opel","Toyota","Renault"];
 const MODELS = ["Alle Modelle","Golf","3er","A4","C-Klasse","Polo","Corsa","Yaris","Clio"];
 const PRICES = ["Beliebig","bis 5.000 €","bis 10.000 €","bis 20.000 €","bis 35.000 €","bis 50.000 €"];
 
 const BRAND_LOGOS = [
-  { name:"VW", bg:"#001E50" },
-  { name:"BMW", bg:"#0066CC" },
-  { name:"Audi", bg:"#BB0A21" },
-  { name:"Mercedes", bg:"#222" },
-  { name:"Ford", bg:"#003476" },
-  { name:"Opel", bg:"#FFCB00" },
+  { name:"VW", bg:"#001E50", match:"Volkswagen" },
+  { name:"BMW", bg:"#0066CC", match:"BMW" },
+  { name:"Audi", bg:"#BB0A21", match:"Audi" },
+  { name:"Mercedes", bg:"#222", match:"Mercedes-Benz" },
+  { name:"Ford", bg:"#003476", match:"Ford" },
+  { name:"Opel", bg:"#FFCB00", match:"Opel" },
 ];
 
 // Skeleton card component
@@ -76,6 +77,25 @@ export default function HomePage() {
 
   const fmt = (n) => parseInt(n || 0).toLocaleString("de-DE");
 
+  const filteredListings = listings.filter(car => {
+    let matchBrand = brand === "Alle Marken" || (car.brand === brand) || (car.title && car.title.toLowerCase().includes(brand.toLowerCase())) || (car.brand && car.brand.toLowerCase() === brand.toLowerCase());
+    let matchPrice = true;
+    if (price !== "Beliebig") {
+      const maxPriceText = price.replace(/\D/g, "");
+      if (maxPriceText) {
+         const maxPrice = parseInt(maxPriceText, 10);
+         if (car.price > maxPrice) matchPrice = false;
+      }
+    }
+    return matchBrand && matchPrice;
+  });
+
+  const resetFilters = () => {
+    setBrand("Alle Marken");
+    setModel("Alle Modelle");
+    setPrice("Beliebig");
+  };
+
   return (
     <>
       <style>{`
@@ -92,23 +112,25 @@ export default function HomePage() {
         .card { animation:fadeUp 0.4s ease both; transition:transform 0.2s,box-shadow 0.2s; }
         .card:hover { transform:translateY(-2px); box-shadow:0 8px 32px rgba(0,82,204,0.13) !important; }
         .new-card { border:2px solid #0052CC !important; animation:pulseBlue 1s ease 4 !important; }
-        .chip:hover { background:#0052CC !important; color:#fff !important; }
+        .chip.active { background:#0052CC !important; color:#fff !important; border-color:#0052CC !important; }
+        .chip:hover { background:#EBF2FF; color:#0052CC; }
         .chip { transition:all 0.18s; }
         .toast { animation:slideDown 0.3s ease; }
+        .tag { padding: 3px 6px; background: #F0F4FA; color: #6B7C93; border-radius: 4px; font-size: 10px; font-weight: 600; display: inline-block; margin-right: 4px; margin-bottom: 4px; }
       `}</style>
 
       <div style={{ minHeight:"100vh", background:"#F4F7FB" }}>
 
         {/* NAV */}
         <nav style={{ background:"#fff", borderBottom:"1.5px solid #E0E8F4", padding:"0 20px", display:"flex", alignItems:"center", justifyContent:"space-between", height:58, position:"sticky", top:0, zIndex:100, boxShadow:"0 2px 8px rgba(0,82,204,0.06)" }}>
-          <a href="/" style={{ display:"flex", alignItems:"center", gap:8 }}>
+          <Link href="/" style={{ display:"flex", alignItems:"center", gap:8 }}>
             <div style={{ width:34, height:34, borderRadius:8, background:"#0052CC", display:"flex", alignItems:"center", justifyContent:"center", fontSize:16 }}>🚘</div>
             <span style={{ fontSize:16, fontWeight:800, color:"#0052CC", letterSpacing:"-0.02em" }}>
               automarket<span style={{ color:"#003D99" }}>.de</span>
             </span>
-          </a>
+          </Link>
           <div style={{ display:"flex", alignItems:"center", gap:8 }}>
-            <a href="/inserate/neu" style={{ background:"#0052CC", color:"#fff", fontSize:13, fontWeight:700, padding:"8px 14px", borderRadius:8 }}>+ Inserieren</a>
+            <Link href="/inserate/neu" style={{ background:"#0052CC", color:"#fff", fontSize:13, fontWeight:700, padding:"8px 14px", borderRadius:8 }}>+ Inserieren</Link>
             <button onClick={() => setMenuOpen(!menuOpen)} style={{ background:"transparent", border:"none", color:"#6B7C93", fontSize:20, padding:"4px" }}>☰</button>
           </div>
         </nav>
@@ -116,8 +138,8 @@ export default function HomePage() {
         {menuOpen && (
           <div style={{ position:"fixed", top:58, left:0, right:0, bottom:0, background:"#fff", zIndex:99, padding:24, display:"flex", flexDirection:"column", gap:4 }}>
             {["🏠 Startseite","🔍 Alle Fahrzeuge","📝 Inserat aufgeben"].map(item => (
-              <a key={item} href={item.includes("Inserat")?"/inserate/neu":"#"} onClick={()=>setMenuOpen(false)}
-                style={{ color:"#1A2B4B", fontSize:16, fontWeight:600, padding:"14px 0", borderBottom:"1px solid #F0F4FA" }}>{item}</a>
+              <Link key={item} href={item.includes("Inserat")?"/inserate/neu":"/"} onClick={()=>setMenuOpen(false)}
+                style={{ color:"#1A2B4B", fontSize:16, fontWeight:600, padding:"14px 0", borderBottom:"1px solid #F0F4FA" }}>{item}</Link>
             ))}
           </div>
         )}
@@ -162,9 +184,6 @@ export default function HomePage() {
                   {PRICES.map(p=><option key={p}>{p}</option>)}
                 </select>
               </div>
-              <button style={{ width:"100%", padding:"13px", borderRadius:10, border:"none", background:"#0052CC", color:"#fff", fontSize:15, fontWeight:700 }}>
-                🔍 Fahrzeuge suchen
-              </button>
             </div>
           </div>
         </div>
@@ -173,8 +192,11 @@ export default function HomePage() {
         <div style={{ padding:"20px 20px 0", maxWidth:480, margin:"0 auto" }}>
           <p style={{ fontSize:10, fontWeight:700, letterSpacing:"0.08em", textTransform:"uppercase", color:"#6B7C93", marginBottom:10 }}>Beliebte Marken</p>
           <div style={{ display:"flex", gap:8, overflowX:"auto", paddingBottom:4, scrollbarWidth:"none" }}>
+            <button className={`chip ${brand === "Alle Marken" ? "active" : ""}`} onClick={() => setBrand("Alle Marken")} style={{ flexShrink:0, padding:"7px 14px", borderRadius:20, border:"1.5px solid #E0E8F4", background:"#fff", fontSize:12, fontWeight:700, color:"#1A2B4B" }}>
+              Alle
+            </button>
             {BRAND_LOGOS.map(b => (
-              <button key={b.name} className="chip" style={{ flexShrink:0, padding:"7px 14px", borderRadius:20, border:"1.5px solid #E0E8F4", background:"#fff", fontSize:12, fontWeight:700, color:"#1A2B4B", display:"flex", alignItems:"center", gap:6 }}>
+              <button key={b.name} onClick={() => setBrand(b.match)} className={`chip ${brand === b.match ? "active" : ""}`} style={{ flexShrink:0, padding:"7px 14px", borderRadius:20, border:"1.5px solid #E0E8F4", background:"#fff", fontSize:12, fontWeight:700, color:"#1A2B4B", display:"flex", alignItems:"center", gap:6 }}>
                 <div style={{ width:10, height:10, borderRadius:"50%", background:b.bg, flexShrink:0 }} />
                 {b.name}
               </button>
@@ -186,28 +208,32 @@ export default function HomePage() {
         <div style={{ padding:"20px 20px 24px", maxWidth:480, margin:"0 auto" }}>
           <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:12 }}>
             <p style={{ fontSize:10, fontWeight:700, letterSpacing:"0.08em", textTransform:"uppercase", color:"#6B7C93" }}>
-              {loading ? "Wird geladen…" : `Aktuelle Inserate (${listings.length})`}
+              {loading ? "Wird geladen…" : `Aktuelle Inserate (${filteredListings.length})`}
             </p>
-            <a href="#" style={{ fontSize:12, fontWeight:700, color:"#0052CC" }}>Alle ansehen →</a>
+            {(!loading && (brand !== "Alle Marken" || price !== "Beliebig")) && (
+              <button onClick={resetFilters} style={{ fontSize:10, fontWeight:700, color:"#0052CC", background:"#EBF2FF", border:"none", padding:"4px 8px", borderRadius:12 }}>
+                Filter zurücksetzen
+              </button>
+            )}
           </div>
 
           <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
             {loading ? (
               // Skeleton cards
               [1,2,3].map(i => <SkeletonCard key={i} />)
-            ) : listings.length === 0 ? (
+            ) : filteredListings.length === 0 ? (
               // Empty state
               <div style={{ textAlign:"center", padding:"40px 20px", background:"#fff", borderRadius:14, border:"1.5px solid #E8F0FB" }}>
-                <div style={{ fontSize:40, marginBottom:12 }}>🚗</div>
-                <p style={{ fontSize:16, fontWeight:700, color:"#1A2B4B", marginBottom:6 }}>Noch keine Inserate</p>
-                <p style={{ fontSize:13, color:"#6B7C93", marginBottom:16 }}>Sei der Erste und inseriere dein Fahrzeug!</p>
-                <a href="/inserate/neu" style={{ display:"inline-block", padding:"11px 24px", background:"#0052CC", color:"#fff", fontSize:14, fontWeight:700, borderRadius:10 }}>+ Jetzt inserieren</a>
+                <div style={{ fontSize:40, marginBottom:12 }}>🔍</div>
+                <p style={{ fontSize:16, fontWeight:700, color:"#1A2B4B", marginBottom:6 }}>Keine Treffer gefunden</p>
+                <p style={{ fontSize:13, color:"#6B7C93", marginBottom:16 }}>Es gibt kein Fahrzeug, das deinen aktuellen Filtern entspricht.</p>
+                <button onClick={resetFilters} style={{ display:"inline-block", padding:"11px 24px", background:"#F0F4FA", color:"#0052CC", border:"none", fontSize:14, fontWeight:700, borderRadius:10 }}>Filter zurücksetzen</button>
               </div>
             ) : (
-              listings.map((car, i) => (
-                <div key={car.id} className={`card${car.id === newId ? " new-card" : ""}`}
+              filteredListings.map((car, i) => (
+                <Link href={`/inserate/${car.id}`} key={car.id} className={`card${car.id === newId ? " new-card" : ""}`}
                   style={{ background:"#fff", borderRadius:14, overflow:"hidden", boxShadow:"0 2px 12px rgba(0,82,204,0.07)", display:"flex", height:120, animationDelay:`${i*0.05}s`, border:"1.5px solid #E8F0FB" }}>
-                  {/* Image with proper crop */}
+                  {/* Image */}
                   <div style={{ width:140, flexShrink:0, position:"relative", overflow:"hidden", background:"#EBF2FF" }}>
                     {car.image_url ? (
                       <img
@@ -226,25 +252,28 @@ export default function HomePage() {
                     )}
                   </div>
                   {/* Info */}
-                  <div style={{ padding:"12px 14px", flex:1, display:"flex", flexDirection:"column", justifyContent:"space-between", minWidth:0 }}>
+                  <div style={{ padding:"10px 12px", flex:1, display:"flex", flexDirection:"column", justifyContent:"space-between", minWidth:0 }}>
                     <div>
-                      <p style={{ fontSize:14, fontWeight:800, color:"#1A2B4B", marginBottom:3, lineHeight:1.2, whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>
+                      <p style={{ fontSize:14, fontWeight:800, color:"#1A2B4B", marginBottom:4, lineHeight:1.2, whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>
                         {car.title || "Fahrzeug"}
                       </p>
-                      <p style={{ fontSize:11, color:"#6B7C93" }}>
-                        {new Date(car.created_at).toLocaleDateString("de-DE", { day:"numeric", month:"short", year:"numeric" })}
-                      </p>
+                      <div style={{ display:"flex", flexWrap:"wrap", marginBottom:6 }}>
+                        {car.year && <span className="tag">{car.year}</span>}
+                        {car.mileage && <span className="tag">{fmt(car.mileage)} km</span>}
+                        {car.fuel_type && <span className="tag">{car.fuel_type}</span>}
+                        {car.transmission && <span className="tag">{car.transmission}</span>}
+                      </div>
                     </div>
                     <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between" }}>
-                      <p style={{ fontSize:19, fontWeight:800, color:"#0052CC" }}>
+                      <p style={{ fontSize:18, fontWeight:800, color:"#0052CC" }}>
                         {fmt(car.price)} €
                       </p>
                       <span style={{ fontSize:9, fontWeight:700, padding:"2px 8px", borderRadius:20, background:"#EBF2FF", color:"#0052CC" }}>
-                        Privat
+                        {car.seller_type || "Privat"}
                       </span>
                     </div>
                   </div>
-                </div>
+                </Link>
               ))
             )}
           </div>
@@ -257,7 +286,7 @@ export default function HomePage() {
             <p style={{ fontSize:22, marginBottom:6 }}>🚗</p>
             <h3 style={{ fontSize:18, fontWeight:800, color:"#fff", marginBottom:6 }}>Fahrzeug verkaufen?</h3>
             <p style={{ fontSize:13, color:"rgba(255,255,255,0.7)", marginBottom:18, lineHeight:1.5 }}>Kostenlos inserieren — in 3 Minuten online.</p>
-            <a href="/inserate/neu" style={{ display:"inline-block", padding:"12px 28px", background:"#fff", color:"#0052CC", fontSize:14, fontWeight:800, borderRadius:10 }}>+ Jetzt inserieren</a>
+            <Link href="/inserate/neu" style={{ display:"inline-block", padding:"12px 28px", background:"#fff", color:"#0052CC", fontSize:14, fontWeight:800, borderRadius:10 }}>+ Jetzt inserieren</Link>
           </div>
         </div>
 
