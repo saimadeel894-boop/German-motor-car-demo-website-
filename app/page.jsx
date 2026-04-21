@@ -264,10 +264,35 @@ export default function HomePage() {
                         {car.transmission && <span className="tag">{car.transmission}</span>}
                       </div>
                     </div>
-                    <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between" }}>
-                      <p style={{ fontSize:18, fontWeight:800, color:"#0052CC" }}>
-                        {fmt(car.price)} €
-                      </p>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 4 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <p style={{ fontSize:18, fontWeight:800, color:"#0052CC", margin: 0 }}>
+                          {fmt(car.price)} €
+                        </p>
+                        <button 
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            const phone = (car.phone || "4917657775736").replace(/\D/g, "");
+                            const msg = encodeURIComponent(`Hallo, ich interessiere mich für Ihr Inserat "${car.title}" auf automarket.de`);
+                            window.open(`https://wa.me/${phone}?text=${msg}`, "_blank");
+                          }}
+                          style={{ 
+                            background: "#25D366", 
+                            color: "#fff", 
+                            border: "none", 
+                            borderRadius: 8, 
+                            padding: "6px 10px", 
+                            fontSize: 11, 
+                            fontWeight: 700,
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 4
+                          }}
+                        >
+                          💬 WhatsApp
+                        </button>
+                      </div>
                       <span style={{ fontSize:9, fontWeight:700, padding:"2px 8px", borderRadius:20, background:"#EBF2FF", color:"#0052CC" }}>
                         {car.seller_type || "Privat"}
                       </span>
@@ -295,9 +320,10 @@ export default function HomePage() {
           <div style={{ fontSize:16, fontWeight:800, color:"#fff", marginBottom:4 }}>automarket<span style={{ color:"#7EB8FF" }}>.de</span></div>
           <p style={{ fontSize:12, color:"rgba(255,255,255,0.45)", marginBottom:14 }}>Die moderne Fahrzeugplattform für Deutschland</p>
           <div style={{ display:"flex", justifyContent:"center", gap:16, flexWrap:"wrap" }}>
-            {["Impressum","Datenschutz","AGB","Kontakt"].map(item=>(
+            {["Impressum","Datenschutz","AGB"].map(item=>(
               <a key={item} href="#" style={{ fontSize:11, color:"rgba(255,255,255,0.4)", fontWeight:600 }}>{item}</a>
             ))}
+            <a href="https://wa.me/4917657775736" target="_blank" rel="noopener noreferrer" style={{ fontSize:11, color:"rgba(255,255,255,0.4)", fontWeight:600 }}>Kontakt</a>
           </div>
           <p style={{ fontSize:11, color:"rgba(255,255,255,0.2)", marginTop:14 }}>© 2025 AutoMarket.de</p>
         </div>

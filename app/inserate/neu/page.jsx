@@ -457,7 +457,7 @@ const StepKontakt = ({ form, update, errors }) => {
       <Field label="Ihr Name" required error={errors.name}>
         <FInput value={form.name} onChange={e => update("name", e.target.value)} placeholder="Max Mustermann" />
       </Field>
-      <Field label="Telefonnummer" hint="Wird im Inserat angezeigt">
+      <Field label="WhatsApp Nummer" hint="Käufer können Sie direkt über WhatsApp kontaktieren">
         <FInput value={form.phone} onChange={e => update("phone", e.target.value)} placeholder="+49 170 1234567" type="tel" />
       </Field>
       <Field label="Standort (PLZ / Ort)" required error={errors.location}>
@@ -588,6 +588,14 @@ export default function CarPostingForm() {
           title: title,
           price: form.price.toString(),
           image_url: imageUrl,
+          seller_name: form.name,
+          phone: form.phone,
+          brand: form.brand,
+          model: form.model,
+          year: form.year.toString(),
+          mileage: form.mileage.toString(),
+          fuel_type: form.fuel,
+          description: form.description
         }])
         .select("id")
         .single();

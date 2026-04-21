@@ -24,7 +24,33 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
-      <body>{children}</body>
+      <body style={{ margin: 0, padding: 0 }}>
+        {children}
+        <a 
+          href="https://wa.me/4917657775736" 
+          target="_blank" 
+          rel="noopener noreferrer"
+          style={{
+            position: "fixed",
+            bottom: "20px",
+            right: "20px",
+            width: "60px",
+            height: "60px",
+            backgroundColor: "#25D366",
+            borderRadius: "50%",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            boxShadow: "0 4px 12px rgba(0,0,0,0.2)",
+            zIndex: 9999,
+            textDecoration: "none",
+            fontSize: "30px"
+          }}
+          title="Kontakt via WhatsApp"
+        >
+          💬
+        </a>
+      </body>
     </html>
   );
 }

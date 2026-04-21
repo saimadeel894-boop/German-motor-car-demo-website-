@@ -180,7 +180,7 @@ export default function CarDetailPage() {
           <span style={{ fontSize:22 }}>↗</span>
         </button>
         <a 
-          href={`https://wa.me/?text=Hallo, ich interessiere mich für dein Inserat ${car.title} auf automarket.de`}
+          href={`https://wa.me/${(car.phone || "4917657775736").replace(/\D/g, "")}?text=${encodeURIComponent(`Hallo, ich interessiere mich für Ihr Inserat "${car.title}" auf automarket.de`)}`}
           target="_blank"
           rel="noopener noreferrer"
           style={{ flex:1, height:52, borderRadius:12, background:"#25D366", color:"#fff", fontSize:16, fontWeight:800, display:"flex", alignItems:"center", justifyContent:"center", gap:8 }}
