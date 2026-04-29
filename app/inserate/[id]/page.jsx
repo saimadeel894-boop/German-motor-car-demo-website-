@@ -1,7 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
-import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 
 export default function CarDetailPage() {
@@ -22,172 +21,131 @@ export default function CarDetailPage() {
       .eq("id", id)
       .single();
 
-    if (error) {
-      console.error(error);
-    } else {
-      setCar(data);
-    }
+    if (!error) setCar(data);
     setLoading(false);
   };
 
   const fmt = (n) => parseInt(n || 0).toLocaleString("de-DE");
 
-  if (loading) {
-    return (
-      <div style={{ minHeight:"100vh", background:"#F4F7FB", display:"flex", alignItems:"center", justifyContent:"center" }}>
-        <div style={{ animation:"shimmer 1.5s infinite", fontSize:32 }}>⏳</div>
-      </div>
-    );
-  }
-
-  if (!car) {
-    return (
-      <div style={{ minHeight:"100vh", background:"#F4F7FB", padding:20, textAlign:"center" }}>
-        <h2>Inserat nicht gefunden</h2>
-        <Link href="/" style={{ color:"#0052CC", fontWeight:600 }}>Zurück zur Übersicht</Link>
-      </div>
-    );
-  }
-
   const handleShare = async () => {
-    try {
-      if (navigator.share) {
-        await navigator.share({
-          title: car.title,
-          text: `Schau dir dieses Auto an: ${car.title} für ${fmt(car.price)} €`,
-          url: window.location.href,
-        });
-      } else {
-        await navigator.clipboard.writeText(window.location.href);
-        alert("Link in die Zwischenablage kopiert!");
-      }
-    } catch (err) {
-      console.error("Share failed", err);
+    if (navigator.share) {
+      navigator.share({ title: car.title, url: window.location.href });
+    } else {
+      navigator.clipboard.writeText(window.location.href);
+      alert("Link kopiert!");
     }
   };
 
+  if (loading) return (
+    <div style={{ minHeight: "100vh", background: "#fff", display: "flex", flexDirection: "column", gap: "20px" }}>
+      <div className="skeleton" style={{ width: "100%", height: "300px" }} />
+      <div style={{ padding: "20px" }}>
+        <div className="skeleton" style={{ width: "80%", height: "30px", marginBottom: "10px" }} />
+        <div className="skeleton" style={{ width: "40%", height: "40px", marginBottom: "20px" }} />
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+          {[1, 2, 3, 4].map(i => <div key={i} className="skeleton" style={{ height: "60px", borderRadius: "12px" }} />)}
+        </div>
+      </div>
+    </div>
+  );
+
+  if (!car) return (
+    <div style={{ padding: "40px", textAlign: "center" }}>
+      <h2>Inserat nicht gefunden</h2>
+      <button onClick={() => router.push("/")} className="btn-primary" style={{ marginTop: "20px" }}>Zurück zur Übersicht</button>
+    </div>
+  );
+
   return (
-    <>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap');
-        * { box-sizing:border-box; margin:0; padding:0; }
-        body { font-family:'Outfit',sans-serif; background:#F4F7FB; padding-bottom: 80px; }
-        a { text-decoration:none; color:inherit; }
-        button { cursor:pointer; font-family:'Outfit',sans-serif; }
-        .spec-item { background: #fff; padding: 12px; border-radius: 12px; border: 1.5px solid #E8F0FB; display: flex; flex-direction: column; gap: 4px; }
-        .spec-label { font-size: 11px; color: #6B7C93; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
-        .spec-val { font-size: 14px; font-weight: 700; color: #1A2B4B; }
-      `}</style>
-      
-      {/* NAV */}
-      <nav style={{ background:"transparent", padding:"16px 20px", display:"flex", alignItems:"center", justifyContent:"space-between", position:"absolute", top:0, left:0, right:0, zIndex:10 }}>
-        <button onClick={() => router.back()} style={{ width:40, height:40, borderRadius:20, background:"rgba(255,255,255,0.9)", border:"none", display:"flex", alignItems:"center", justifyContent:"center", boxShadow:"0 4px 12px rgba(0,0,0,0.1)" }}>
-          <span style={{ fontSize:20 }}>←</span>
+    <div style={{ minHeight: "100vh", background: "var(--background)", paddingBottom: "100px" }}>
+      {/* Navbar Overlay */}
+      <nav style={{ position: "absolute", top: 0, left: 0, right: 0, zIndex: 10, padding: "16px 20px", display: "flex", justifyContent: "space-between" }}>
+        <button onClick={() => router.back()} style={{ width: "40px", height: "40px", borderRadius: "50%", background: "rgba(255,255,255,0.9)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "var(--shadow-md)" }}>
+          <span style={{ fontSize: "20px", fontWeight: "bold", color: "var(--primary)" }}>←</span>
         </button>
-        <button onClick={handleShare} style={{ width:40, height:40, borderRadius:20, background:"rgba(255,255,255,0.9)", border:"none", display:"flex", alignItems:"center", justifyContent:"center", boxShadow:"0 4px 12px rgba(0,0,0,0.1)" }}>
-          <span style={{ fontSize:20 }}>↗</span>
+        <button onClick={handleShare} style={{ width: "40px", height: "40px", borderRadius: "50%", background: "rgba(255,255,255,0.9)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "var(--shadow-md)" }}>
+          <span style={{ fontSize: "18px" }}>↗</span>
         </button>
       </nav>
 
-      {/* LARGE PHOTO */}
-      <div style={{ width:"100%", height:300, background:"#EBF2FF", position:"relative" }}>
+      {/* Image Gallery */}
+      <div style={{ width: "100%", height: "320px", background: "#000", position: "relative", overflow: "hidden" }}>
         {car.image_url ? (
-          <img src={car.image_url} alt={car.title} style={{ width:"100%", height:"100%", objectFit:"cover" }} />
+          <img src={car.image_url} style={{ width: "100%", height: "100%", objectFit: "cover" }} alt={car.title} />
         ) : (
-          <div style={{ position:"absolute", inset:0, display:"flex", alignItems:"center", justifyContent:"center", fontSize:64 }}>🚗</div>
+          <div style={{ height: "100%", display: "flex", alignItems: "center", justifyContent: "center", background: "var(--primary-light)", fontSize: "64px" }}>🚗</div>
         )}
+        <div style={{ position: "absolute", bottom: "16px", right: "16px", background: "rgba(0,0,0,0.6)", color: "#fff", padding: "4px 12px", borderRadius: "20px", fontSize: "12px", fontWeight: "600" }}>
+          1 / 1
+        </div>
       </div>
 
-      <div style={{ maxWidth:480, margin:"0 auto", padding:"20px", marginTop:"-24px", position:"relative", zIndex:2 }}>
-        {/* HEADER & PRICE */}
-        <div style={{ background:"#fff", borderRadius:16, padding:"20px", boxShadow:"0 8px 30px rgba(0,82,204,0.08)", marginBottom:20 }}>
-          <div style={{ display:"inline-block", background:"#EBF2FF", color:"#0052CC", fontSize:11, fontWeight:800, padding:"4px 10px", borderRadius:20, marginBottom:10 }}>
-            {car.seller_type || "Privatverkauf"}
+      {/* Content */}
+      <main style={{ maxWidth: "600px", margin: "-20px auto 0", padding: "0 16px", position: "relative" }}>
+        {/* Main Info Card */}
+        <div className="card" style={{ padding: "24px", marginBottom: "20px" }}>
+          <div style={{ display: "inline-block", background: "var(--primary-light)", color: "var(--primary)", fontSize: "11px", fontWeight: "800", padding: "4px 10px", borderRadius: "20px", marginBottom: "12px" }}>
+            {car.condition || "Top Angebot"}
           </div>
-          <h1 style={{ fontSize:22, fontWeight:800, color:"#1A2B4B", lineHeight:1.2, marginBottom:12 }}>
+          <h1 style={{ fontSize: "24px", fontWeight: "800", color: "var(--text-main)", marginBottom: "8px", lineHeight: "1.2" }}>
             {car.title}
           </h1>
-          <div style={{ fontSize:28, fontWeight:800, color:"#0052CC" }}>
+          <p style={{ fontSize: "14px", color: "var(--text-muted)", marginBottom: "16px" }}>
+            📍 {car.location || "Deutschland"}
+          </p>
+          <div style={{ fontSize: "32px", fontWeight: "900", color: "var(--primary)" }}>
             {fmt(car.price)} €
           </div>
-          <p style={{ fontSize:12, color:"#6B7C93", marginTop:4 }}>Verhandlungsbasis</p>
+          <p style={{ fontSize: "12px", color: "var(--text-muted)", marginTop: "4px" }}>Verhandlungsbasis</p>
         </div>
 
-        {/* SPECS GRID */}
-        <h3 style={{ fontSize:16, fontWeight:800, color:"#1A2B4B", marginBottom:12 }}>Fahrzeugdaten</h3>
-        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10, marginBottom:24 }}>
-          <div className="spec-item">
-             <span className="spec-label">Kilometer</span>
-             <span className="spec-val">{fmt(car.mileage)} km</span>
-          </div>
-          <div className="spec-item">
-             <span className="spec-label">Erstzulassung</span>
-             <span className="spec-val">{car.year || "-"}</span>
-          </div>
-          <div className="spec-item">
-             <span className="spec-label">Kraftstoff</span>
-             <span className="spec-val">{car.fuel_type || "-"}</span>
-          </div>
-          <div className="spec-item">
-             <span className="spec-label">Getriebe</span>
-             <span className="spec-val">{car.transmission || "-"}</span>
-          </div>
+        {/* Specs Grid */}
+        <h3 style={{ fontSize: "18px", fontWeight: "800", marginBottom: "16px" }}>Technische Daten</h3>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "24px" }}>
+          {[
+            { label: "Kilometer", value: `${fmt(car.mileage)} km`, icon: "🛣️" },
+            { label: "Erstzulassung", value: car.year, icon: "📅" },
+            { label: "Kraftstoff", value: car.fuel_type, icon: "⛽" },
+            { label: "Modell", value: car.model, icon: "🚗" },
+          ].map(spec => (
+            <div key={spec.label} style={{ background: "var(--white)", padding: "16px", borderRadius: "var(--radius-md)", border: "1px solid var(--border)", display: "flex", flexDirection: "column", gap: "4px" }}>
+              <span style={{ fontSize: "11px", color: "var(--text-muted)", fontWeight: "700", textTransform: "uppercase" }}>{spec.label}</span>
+              <span style={{ fontSize: "15px", fontWeight: "700", color: "var(--text-main)" }}>{spec.value}</span>
+            </div>
+          ))}
         </div>
 
-        {/* HIGHLIGHTS */}
-        <h3 style={{ fontSize:16, fontWeight:800, color:"#1A2B4B", marginBottom:12 }}>Highlights</h3>
-        <div style={{ background:"#fff", borderRadius:16, padding:"16px", border:"1.5px solid #E8F0FB", marginBottom:24 }}>
-          <ul style={{ listStyle:"none", padding:0, margin:0, display:"flex", flexDirection:"column", gap:10 }}>
-            <li style={{ display:"flex", gap:10, alignItems:"center", fontSize:14, fontWeight:600, color:"#1A2B4B" }}>
-              <span style={{ color:"#0052CC" }}>✓</span> TÜV neu
-            </li>
-            <li style={{ display:"flex", gap:10, alignItems:"center", fontSize:14, fontWeight:600, color:"#1A2B4B" }}>
-              <span style={{ color:"#0052CC" }}>✓</span> Scheckheftgepflegt
-            </li>
-            <li style={{ display:"flex", gap:10, alignItems:"center", fontSize:14, fontWeight:600, color:"#1A2B4B" }}>
-              <span style={{ color:"#0052CC" }}>✓</span> Unfallfrei
-            </li>
-          </ul>
-        </div>
-
-        {/* DESCRIPTION */}
-        <h3 style={{ fontSize:16, fontWeight:800, color:"#1A2B4B", marginBottom:12 }}>Beschreibung</h3>
-        <div style={{ background:"#fff", borderRadius:16, padding:"20px", border:"1.5px solid #E8F0FB", marginBottom:24 }}>
-          <p style={{ fontSize:14, color:"#4A5B73", lineHeight:1.6, whiteSpace:"pre-wrap" }}>
-            {car.description || "Keine Beschreibung angegeben."}
+        {/* Description */}
+        <h3 style={{ fontSize: "18px", fontWeight: "800", marginBottom: "16px" }}>Beschreibung</h3>
+        <div className="card" style={{ padding: "20px", marginBottom: "24px" }}>
+          <p style={{ fontSize: "15px", lineHeight: "1.6", color: "var(--secondary)", whiteSpace: "pre-wrap" }}>
+            {car.description || "Keine Beschreibung vorhanden."}
           </p>
         </div>
 
-        {/* SELLER INFO */}
-        <h3 style={{ fontSize:16, fontWeight:800, color:"#1A2B4B", marginBottom:12 }}>Anbieter</h3>
-        {/* We use WhatsApp formatting matching Toni's Facebook style */}
-        <div style={{ background:"#fff", borderRadius:16, padding:"20px", border:"1.5px solid #E8F0FB", display:"flex", alignItems:"center", gap:16, marginBottom:24 }}>
-          <div style={{ width:48, height:48, borderRadius:"50%", background:"#EBF2FF", display:"flex", alignItems:"center", justifyContent:"center", fontSize:24 }}>
-            👤
-          </div>
+        {/* Seller Info */}
+        <div className="card" style={{ padding: "20px", display: "flex", alignItems: "center", gap: "16px" }}>
+          <div style={{ width: "50px", height: "50px", borderRadius: "50%", background: "var(--primary-light)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "24px" }}>👤</div>
           <div>
-            <div style={{ fontSize:15, fontWeight:800, color:"#1A2B4B", marginBottom:2 }}>
-              {car.seller_name || "Privater Verkäufer"}
-            </div>
-            <div style={{ fontSize:12, color:"#6B7C93" }}>Aktiv auf automarket.de</div>
+            <div style={{ fontWeight: "800", color: "var(--text-main)" }}>{car.seller_name || "Privater Anbieter"}</div>
+            <div style={{ fontSize: "13px", color: "var(--text-muted)" }}>Aktiv seit 2024</div>
           </div>
         </div>
-      </div>
+      </main>
 
-      {/* STICKY BOTTOM BAR */}
-      <div style={{ position:"fixed", bottom:0, left:0, right:0, background:"#fff", padding:"12px 20px", display:"flex", gap:12, borderTop:"1px solid #E0E8F4", zIndex:100, boxShadow:"0 -4px 12px rgba(0,0,0,0.05)" }}>
-        <button onClick={handleShare} style={{ flexShrink:0, width:52, height:52, borderRadius:12, background:"#F0F4FA", border:"none", display:"flex", alignItems:"center", justifyContent:"center", color:"#0052CC" }}>
-          <span style={{ fontSize:22 }}>↗</span>
+      {/* Sticky Bottom Bar */}
+      <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, background: "var(--white)", padding: "16px 20px", borderTop: "1px solid var(--border)", display: "flex", gap: "12px", zIndex: 100, boxShadow: "0 -4px 10px rgba(0,0,0,0.05)" }}>
+        <button onClick={handleShare} style={{ width: "52px", height: "52px", borderRadius: "12px", background: "var(--background)", border: "none", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+          <span style={{ fontSize: "20px" }}>↗</span>
         </button>
-        <a 
-          href={`https://wa.me/${(car.phone || "4917657775736").replace(/\D/g, "")}?text=${encodeURIComponent(`Hallo, ich interessiere mich für Ihr Inserat "${car.title}" auf automarket.de`)}`}
+        <a
+          href={`https://wa.me/${(car.phone || "").replace(/\D/g, "")}?text=Hallo, ich interessiere mich für Ihr Inserat: ${car.title}`}
           target="_blank"
-          rel="noopener noreferrer"
-          style={{ flex:1, height:52, borderRadius:12, background:"#25D366", color:"#fff", fontSize:16, fontWeight:800, display:"flex", alignItems:"center", justifyContent:"center", gap:8 }}
+          style={{ flex: 1, background: "#25D366", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "12px", fontWeight: "800", fontSize: "16px", textDecoration: "none", gap: "8px" }}
         >
           <span>💬</span> WhatsApp
         </a>
       </div>
-    </>
+    </div>
   );
 }
